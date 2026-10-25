@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: verify user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function: verify user owns the document path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profile documents
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Health assessments subcollection
+      match /healthAssessments/{assessmentId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Health tracking records (blood pressure, glucose, weight, habits)
+      match /healthLogs/{logId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Personalized workouts
+      match /workouts/{workoutId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Assistant chat sessions
+      match /chatHistory/{chatId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
